@@ -1,0 +1,17 @@
+[project]
+name = "model-regression-detector"
+version = "0.1.0"
+description = "Catches worse answers from prompt or model changes before they ship: runs an eval suite against a baseline and fails CI on statistically significant regressions (first target: text-to-sql-guardrails)."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+model-regression-detector = "model_regression_detector.cli:main"
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
