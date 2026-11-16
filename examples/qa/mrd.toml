@@ -1,0 +1,10 @@
+alpha = 0.05
+default_min_effect = 0.05
+bootstrap_samples = 10000
+seed = 7
+fail_on = "regression"
+max_latency_regression_pct = 50
+max_cost_regression_pct = 50
+
+[min_effect]
+similarity = 0.02
