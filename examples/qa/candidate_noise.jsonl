@@ -1,0 +1,41 @@
+{"type": "run", "suite": "qa-toy", "variant": "candidate-noise", "created_at": "2026-11-17T00:00:00Z", "meta": {"model": "toy-1", "prompt_version": "v1-reworded"}}
+{"case_id": "math-01", "repeat": 0, "output": "answer-1", "scores": {"correct": true, "similarity": 0.993}, "latency_ms": 584.3, "cost_usd": 0.00082}
+{"case_id": "math-02", "repeat": 0, "output": "answer-2", "scores": {"correct": true, "similarity": 0.863}, "latency_ms": 550.6, "cost_usd": 0.00109}
+{"case_id": "math-03", "repeat": 0, "output": "answer-3", "scores": {"correct": true, "similarity": 0.95}, "latency_ms": 392.4, "cost_usd": 0.00104}
+{"case_id": "math-04", "repeat": 0, "output": "answer-4", "scores": {"correct": true, "similarity": 0.941}, "latency_ms": 474.4, "cost_usd": 0.00086}
+{"case_id": "math-05", "repeat": 0, "output": "answer-5", "scores": {"correct": true, "similarity": 0.915}, "latency_ms": 418.1, "cost_usd": 0.00109}
+{"case_id": "math-06", "repeat": 0, "output": "answer-6", "scores": {"correct": true, "similarity": 0.999}, "latency_ms": 584.8, "cost_usd": 0.00102}
+{"case_id": "math-07", "repeat": 0, "output": "answer-7", "scores": {"correct": true, "similarity": 0.917}, "latency_ms": 380.5, "cost_usd": 0.00081}
+{"case_id": "math-08", "repeat": 0, "output": "answer-8", "scores": {"correct": true, "similarity": 0.854}, "latency_ms": 439.5, "cost_usd": 0.00093}
+{"case_id": "math-09", "repeat": 0, "output": "answer-9", "scores": {"correct": true, "similarity": 0.907}, "latency_ms": 567.5, "cost_usd": 0.00101}
+{"case_id": "math-10", "repeat": 0, "output": "answer-10", "scores": {"correct": true, "similarity": 0.934}, "latency_ms": 370.8, "cost_usd": 0.00081}
+{"case_id": "facts-01", "repeat": 0, "output": "answer-11", "scores": {"correct": true, "similarity": 0.899}, "latency_ms": 341.0, "cost_usd": 0.001}
+{"case_id": "facts-02", "repeat": 0, "output": "answer-12", "scores": {"correct": true, "similarity": 1.0}, "latency_ms": 502.3, "cost_usd": 0.00087}
+{"case_id": "facts-03", "repeat": 0, "output": "answer-13", "scores": {"correct": true, "similarity": 0.984}, "latency_ms": 539.0, "cost_usd": 0.00109}
+{"case_id": "facts-04", "repeat": 0, "output": "wrong answer for facts-04", "scores": {"correct": false, "similarity": 0.472}, "latency_ms": 528.9, "cost_usd": 0.00112}
+{"case_id": "facts-05", "repeat": 0, "output": "answer-15", "scores": {"correct": true, "similarity": 0.903}, "latency_ms": 594.3, "cost_usd": 0.00118}
+{"case_id": "facts-06", "repeat": 0, "output": "answer-16", "scores": {"correct": true, "similarity": 0.874}, "latency_ms": 526.2, "cost_usd": 0.00109}
+{"case_id": "facts-07", "repeat": 0, "output": "wrong answer for facts-07", "scores": {"correct": false, "similarity": 0.338}, "latency_ms": 459.1, "cost_usd": 0.001}
+{"case_id": "facts-08", "repeat": 0, "output": "answer-18", "scores": {"correct": true, "similarity": 0.989}, "latency_ms": 450.3, "cost_usd": 0.00113}
+{"case_id": "facts-09", "repeat": 0, "output": "answer-19", "scores": {"correct": true, "similarity": 0.903}, "latency_ms": 564.9, "cost_usd": 0.00116}
+{"case_id": "facts-10", "repeat": 0, "output": "answer-20", "scores": {"correct": true, "similarity": 0.919}, "latency_ms": 470.3, "cost_usd": 0.00117}
+{"case_id": "format-01", "repeat": 0, "output": "answer-21", "scores": {"correct": true, "similarity": 0.959}, "latency_ms": 446.0, "cost_usd": 0.00089}
+{"case_id": "format-02", "repeat": 0, "output": "answer-22", "scores": {"correct": true, "similarity": 0.899}, "latency_ms": 509.9, "cost_usd": 0.00087}
+{"case_id": "format-03", "repeat": 0, "output": "wrong answer for format-03", "scores": {"correct": false, "similarity": 0.472}, "latency_ms": 380.4, "cost_usd": 0.00116}
+{"case_id": "format-04", "repeat": 0, "output": "answer-24", "scores": {"correct": true, "similarity": 0.896}, "latency_ms": 587.2, "cost_usd": 0.00108}
+{"case_id": "format-05", "repeat": 0, "output": "answer-25", "scores": {"correct": true, "similarity": 0.926}, "latency_ms": 455.3, "cost_usd": 0.00106}
+{"case_id": "format-06", "repeat": 0, "output": "wrong answer for format-06", "scores": {"correct": false, "similarity": 0.376}, "latency_ms": 393.6, "cost_usd": 0.00088}
+{"case_id": "format-07", "repeat": 0, "output": "answer-27", "scores": {"correct": true, "similarity": 0.927}, "latency_ms": 580.2, "cost_usd": 0.00105}
+{"case_id": "format-08", "repeat": 0, "output": "answer-28", "scores": {"correct": true, "similarity": 0.861}, "latency_ms": 546.1, "cost_usd": 0.00109}
+{"case_id": "format-09", "repeat": 0, "output": "answer-29", "scores": {"correct": true, "similarity": 0.986}, "latency_ms": 357.4, "cost_usd": 0.0011}
+{"case_id": "format-10", "repeat": 0, "output": "answer-30", "scores": {"correct": true, "similarity": 0.859}, "latency_ms": 495.9, "cost_usd": 0.00091}
+{"case_id": "reasoning-01", "repeat": 0, "output": "answer-31", "scores": {"correct": true, "similarity": 0.884}, "latency_ms": 562.6, "cost_usd": 0.00084}
+{"case_id": "reasoning-02", "repeat": 0, "output": "answer-32", "scores": {"correct": true, "similarity": 0.928}, "latency_ms": 556.2, "cost_usd": 0.0009}
+{"case_id": "reasoning-03", "repeat": 0, "output": "answer-33", "scores": {"correct": true, "similarity": 0.882}, "latency_ms": 564.2, "cost_usd": 0.00097}
+{"case_id": "reasoning-04", "repeat": 0, "output": "wrong answer for reasoning-04", "scores": {"correct": false, "similarity": 0.415}, "latency_ms": 309.6, "cost_usd": 0.00094}
+{"case_id": "reasoning-05", "repeat": 0, "output": "answer-35", "scores": {"correct": true, "similarity": 0.876}, "latency_ms": 501.8, "cost_usd": 0.00083}
+{"case_id": "reasoning-06", "repeat": 0, "output": "answer-36", "scores": {"correct": true, "similarity": 0.993}, "latency_ms": 307.6, "cost_usd": 0.00109}
+{"case_id": "reasoning-07", "repeat": 0, "output": "answer-37", "scores": {"correct": true, "similarity": 0.853}, "latency_ms": 376.7, "cost_usd": 0.00113}
+{"case_id": "reasoning-08", "repeat": 0, "output": "answer-38", "scores": {"correct": true, "similarity": 0.874}, "latency_ms": 355.1, "cost_usd": 0.00108}
+{"case_id": "reasoning-09", "repeat": 0, "output": "answer-39", "scores": {"correct": true, "similarity": 0.908}, "latency_ms": 312.9, "cost_usd": 0.0012}
+{"case_id": "reasoning-10", "repeat": 0, "output": "wrong answer for reasoning-10", "scores": {"correct": false, "similarity": 0.245}, "latency_ms": 310.9, "cost_usd": 0.00094}

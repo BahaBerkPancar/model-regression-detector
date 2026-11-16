@@ -1,0 +1,207 @@
+name: qa-toy
+metrics:
+- name: correct
+  kind: pass_fail
+- name: similarity
+  kind: score
+cases:
+- id: math-01
+  input: Question 1 (math)
+  expected: answer-1
+  tags:
+  - math
+- id: math-02
+  input: Question 2 (math)
+  expected: answer-2
+  tags:
+  - math
+- id: math-03
+  input: Question 3 (math)
+  expected: answer-3
+  tags:
+  - math
+- id: math-04
+  input: Question 4 (math)
+  expected: answer-4
+  tags:
+  - math
+- id: math-05
+  input: Question 5 (math)
+  expected: answer-5
+  tags:
+  - math
+- id: math-06
+  input: Question 6 (math)
+  expected: answer-6
+  tags:
+  - math
+- id: math-07
+  input: Question 7 (math)
+  expected: answer-7
+  tags:
+  - math
+- id: math-08
+  input: Question 8 (math)
+  expected: answer-8
+  tags:
+  - math
+- id: math-09
+  input: Question 9 (math)
+  expected: answer-9
+  tags:
+  - math
+- id: math-10
+  input: Question 10 (math)
+  expected: answer-10
+  tags:
+  - math
+- id: facts-01
+  input: Question 11 (facts)
+  expected: answer-11
+  tags:
+  - facts
+- id: facts-02
+  input: Question 12 (facts)
+  expected: answer-12
+  tags:
+  - facts
+- id: facts-03
+  input: Question 13 (facts)
+  expected: answer-13
+  tags:
+  - facts
+- id: facts-04
+  input: Question 14 (facts)
+  expected: answer-14
+  tags:
+  - facts
+- id: facts-05
+  input: Question 15 (facts)
+  expected: answer-15
+  tags:
+  - facts
+- id: facts-06
+  input: Question 16 (facts)
+  expected: answer-16
+  tags:
+  - facts
+- id: facts-07
+  input: Question 17 (facts)
+  expected: answer-17
+  tags:
+  - facts
+- id: facts-08
+  input: Question 18 (facts)
+  expected: answer-18
+  tags:
+  - facts
+- id: facts-09
+  input: Question 19 (facts)
+  expected: answer-19
+  tags:
+  - facts
+- id: facts-10
+  input: Question 20 (facts)
+  expected: answer-20
+  tags:
+  - facts
+- id: format-01
+  input: Question 21 (format)
+  expected: answer-21
+  tags:
+  - format
+- id: format-02
+  input: Question 22 (format)
+  expected: answer-22
+  tags:
+  - format
+- id: format-03
+  input: Question 23 (format)
+  expected: answer-23
+  tags:
+  - format
+- id: format-04
+  input: Question 24 (format)
+  expected: answer-24
+  tags:
+  - format
+- id: format-05
+  input: Question 25 (format)
+  expected: answer-25
+  tags:
+  - format
+- id: format-06
+  input: Question 26 (format)
+  expected: answer-26
+  tags:
+  - format
+- id: format-07
+  input: Question 27 (format)
+  expected: answer-27
+  tags:
+  - format
+- id: format-08
+  input: Question 28 (format)
+  expected: answer-28
+  tags:
+  - format
+- id: format-09
+  input: Question 29 (format)
+  expected: answer-29
+  tags:
+  - format
+- id: format-10
+  input: Question 30 (format)
+  expected: answer-30
+  tags:
+  - format
+- id: reasoning-01
+  input: Question 31 (reasoning)
+  expected: answer-31
+  tags:
+  - reasoning
+- id: reasoning-02
+  input: Question 32 (reasoning)
+  expected: answer-32
+  tags:
+  - reasoning
+- id: reasoning-03
+  input: Question 33 (reasoning)
+  expected: answer-33
+  tags:
+  - reasoning
+- id: reasoning-04
+  input: Question 34 (reasoning)
+  expected: answer-34
+  tags:
+  - reasoning
+- id: reasoning-05
+  input: Question 35 (reasoning)
+  expected: answer-35
+  tags:
+  - reasoning
+- id: reasoning-06
+  input: Question 36 (reasoning)
+  expected: answer-36
+  tags:
+  - reasoning
+- id: reasoning-07
+  input: Question 37 (reasoning)
+  expected: answer-37
+  tags:
+  - reasoning
+- id: reasoning-08
+  input: Question 38 (reasoning)
+  expected: answer-38
+  tags:
+  - reasoning
+- id: reasoning-09
+  input: Question 39 (reasoning)
+  expected: answer-39
+  tags:
+  - reasoning
+- id: reasoning-10
+  input: Question 40 (reasoning)
+  expected: answer-40
+  tags:
+  - reasoning
