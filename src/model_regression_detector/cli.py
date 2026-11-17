@@ -77,6 +77,15 @@ def _build() -> argparse.ArgumentParser:
     accept.add_argument("--config")
     show = bsub.add_parser("show", help="show a baseline header and acceptance provenance")
     show.add_argument("baseline")
+
+    deepeval = sub.add_parser(
+        "from-deepeval", help="convert an exported DeepEval result JSON file to mrd JSONL"
+    )
+    deepeval.add_argument("results")
+    deepeval.add_argument("--out", help="write here instead of stdout")
+    deepeval.add_argument("--suite", default="deepeval")
+    deepeval.add_argument("--variant", default="candidate")
+    deepeval.add_argument("--created-at")
     return parser
 
 
@@ -181,6 +190,20 @@ def _cmd_baseline(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_from_deepeval(args: argparse.Namespace) -> int:
+    from .bridges.deepeval import export_json
+
+    jsonl = export_json(
+        args.results, suite=args.suite, variant=args.variant, created_at=args.created_at
+    )
+    if args.out:
+        Path(args.out).write_text(jsonl, encoding="utf-8")
+        print(f"Wrote {len(jsonl.splitlines()) - 1} result rows to {args.out}")
+    else:
+        print(jsonl, end="")
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build().parse_args(argv)
     handlers = {
@@ -190,6 +213,7 @@ def main(argv: list[str] | None = None) -> int:
         "run": _cmd_run,
         "t2s": _cmd_t2s,
         "baseline": _cmd_baseline,
+        "from-deepeval": _cmd_from_deepeval,
     }
     try:
         return handlers[args.command](args)

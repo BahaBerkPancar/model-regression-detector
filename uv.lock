@@ -512,7 +512,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "text-to-sql-guardrails", marker = "extra == 't2s'", directory = "../text-to-sql-guardrails" },
 ]
-provides-extras = ["t2s"]
+provides-extras = ["deepeval", "t2s"]
 
 [package.metadata.requires-dev]
 dev = [
