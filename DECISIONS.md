@@ -2,6 +2,25 @@
 
 Newest first. One entry per decision: date, what was decided, why, and what was rejected.
 
+## 2026-11-17 – M4 showcase: exported DeepEval results, no evaluator dependency
+- **The DeepEval bridge is duck-typed and export-only.** It reads result `name`, `success`, optional
+  `score`, and `metrics_data`/`metricsData` entries from mappings or compatible objects. Numeric
+  metric scores win over their success flags; success is the fallback for scoreless metrics, and
+  duplicate result names become mrd repeats. Importing mrd never imports or executes DeepEval.
+- **The JSON compatibility target is deliberately narrow.** The reader accepts a bare result list
+  and wrappers named `test_results` or `testResults`, corresponding to the EvaluationResult-style
+  shape described by the M4 brief. No DeepEval package or exporter fixture was available locally,
+  and network access was forbidden, so the exact producer version remains unverified rather than
+  being guessed. Hand-written fixtures lock down the stated shape; a future verified exporter may
+  add an explicit version fixture without breaking it.
+- **`deepeval` is an empty optional feature marker, not a dependency.** mrd consumes a JSON export
+  from the environment that owns the evaluator. Installing an LLM evaluation framework in every CI
+  gate would enlarge the lock, blur the no-model-call boundary, and imply that mrd runs paid judges.
+  A hard dependency and import-time integration were rejected.
+- **The job-summary PNG is a locally styled excerpt of the committed report.** It uses no CDN or
+  web font and shows the exact verdict and top metric table; the full report is too tall to be a
+  useful README image. System Chrome rendered it in a disposable profile and process group.
+
 ## 2026-11-17 – M3 CI gate: file protocols, auditable baselines, pinned actions
 - **GitHub integration uses its summary/output files, not API calls.** `mrd compare` appends the same Markdown produced locally, writes three single-line outputs, and emits escaped error/warning annotations. The report is byte-capped at 1 MiB so model output cannot make the step summary fail. On GitHub the full untrusted Markdown stays out of stdout, where workflow-command syntax is active.
 - **Accepted runs stay byte-for-byte intact; provenance is a sidecar.** Rewriting a run header would change the evidence being accepted. `<baseline>.provenance.json` records acceptance time, Git SHA, suite, variant, previous variant, and the comparison verdict. Replacing an existing baseline requires `--suite` (and accepts the normal optional config), because inventing a verdict without metric definitions would be misleading.

@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Completed the 0.1.0 showcase: a problem-first README with real recorded PR-gate evidence,
+  paired-statistics explanation, honest power/independence/live-model/latency limits, architecture
+  diagram, and rendered GitHub job-summary excerpt.
+- Added `mrd from-deepeval`: an offline, duck-typed converter for bare or wrapped DeepEval-style
+  result JSON. It maps overall and named metric results into mrd JSONL without importing DeepEval,
+  executing metrics, calling an LLM, or adding a runtime dependency.
 - Added the M3 CI gate: a composite GitHub Action, pinned test and demo workflows, GitHub job-summary/output/annotation integration with hostile-text escaping and a 1 MiB cap, plus an offline two-outcome dry run.
 - Added `mrd baseline accept` and `mrd baseline show`; accepted JSONL stays unchanged while a source-backed sidecar records Git SHA, acceptance time, variant, previous baseline, and comparison verdict.
 - Added a ready-to-copy text-to-SQL pull-request workflow with minimal permissions, recorded generations by default, disposable PostgreSQL, and a three-part opt-in before any paid live model call.

@@ -1,37 +1,83 @@
 # model-regression-detector
 
-Catches worse answers from prompt or model changes before they ship: runs an eval suite against a baseline and fails CI on statistically significant regressions (first target: text-to-sql-guardrails).
+**Catch worse answers from prompt or model changes before they reach users.** `mrd` compares the
+same eval cases before and after a change, writes a pull-request summary, and fails CI only when
+the paired evidence supports a regression.
 
-## What it does
+> **REGRESSION** — 72 of 72 cases paired; `correct` fell from 0.931 to 0.639, with 21 cases worse
+> and none better (p = 9.537e-07).
 
-You keep an eval suite (cases with expected answers). Every prompt or model change produces a run: one scored result per case. `mrd compare` pairs the candidate run with the baseline run case by case and says REGRESSION, IMPROVEMENT, NO_CHANGE or INCONCLUSIVE, with a Markdown report for the pull request and an exit code CI can fail on. It runs fully offline and makes no model calls.
+| Metric | Kind | Baseline | Candidate | Delta | 95% CI | p | Worse/better | Verdict |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | --- |
+| correct | pass_fail | 0.931 | 0.639 | -0.292 | [-0.403, -0.194] | <0.0001 | 21/0 | **REGRESSION** |
+| safe | pass_fail | 1.000 | 1.000 | +0.000 | [+0.000, +0.000] | 1.0000 | 0/0 | **NO_CHANGE** |
+| answered | pass_fail | 1.000 | 1.000 | +0.000 | [+0.000, +0.000] | 1.0000 | 0/0 | **NO_CHANGE** |
+| attempts | score | 1.000 | 1.000 | +0.000 | [+0.000, +0.000] | 1.0000 | 0/0 | **NO_CHANGE** |
 
-Why per case: comparing two averages on a 40-case suite often cannot tell a real drop from noise. Looking at the same cases in both runs, and at which ones flipped, can.
+![Rendered GitHub job summary showing a regression](docs/job-summary.png)
+
+This is the committed, offline text-to-SQL regression report. The full evidence is in
+[`examples/t2s/report_regress.md`](examples/t2s/report_regress.md).
+
+## Why paired?
+
+Two averages hide which cases changed. A candidate can keep the same average by breaking five
+answers and fixing five others, and on a small suite run-to-run randomness can move the average on its
+own. `mrd` pairs each candidate answer with the baseline answer for that same case
+and tests the direction of the differences.
+
+| Recorded demonstration | Newly worse | Newly better | What paired evidence says |
+| --- | ---: | ---: | --- |
+| Real regression | 21 | 0 | **REGRESSION** — the flips are too one-sided to dismiss as noise |
+| Seeded noise | 5 | 5 | **NO_CHANGE** — same average; the flips go both ways, so there is no consistent direction |
+
+For pass/fail metrics, McNemar's exact test asks whether the worse/better split could come from a
+fair coin. For numeric scores, a sign-flip permutation test asks the same question about per-case
+differences. A verdict requires both p below `alpha` and an effect at least `min_effect`; confidence
+intervals come from a seeded paired bootstrap. Tag slices use Holm correction and remain
+exploratory—they do not secretly change the overall gate.
+
+![Architecture: suite to adapter runs to paired comparison to verdict to CI gate](docs/architecture.svg)
 
 ## Quick start
+
+The toy QA example is deterministic, offline, and needs three commands:
 
 ```bash
 uv sync
 uv run mrd validate examples/qa/suite.yaml examples/qa/baseline.jsonl examples/qa/candidate_regress.jsonl
-
-# a real regression (8 of 10 math cases broke): REGRESSION, exit code 1
-uv run mrd compare --suite examples/qa/suite.yaml --baseline examples/qa/baseline.jsonl \
-  --candidate examples/qa/candidate_regress.jsonl --config examples/qa/mrd.toml
-
-# noise only (3 cases got worse, 3 got better): NO_CHANGE, exit code 0
-uv run mrd compare --suite examples/qa/suite.yaml --baseline examples/qa/baseline.jsonl \
-  --candidate examples/qa/candidate_noise.jsonl --config examples/qa/mrd.toml
+uv run mrd compare --suite examples/qa/suite.yaml --baseline examples/qa/baseline.jsonl --candidate examples/qa/candidate_regress.jsonl --config examples/qa/mrd.toml
 ```
 
-Add `--md report.md --json report.json` to write the reports (`mrd report --json report.json` renders the Markdown again). The example files are produced by `examples/make_runs.py` (seeded), so they never change by accident.
+The last command intentionally reports `REGRESSION` and exits 1. Substitute
+`candidate_noise.jsonl` to see `NO_CHANGE` and exit 0. Add `--md report.md --json report.json` to
+save both report formats; `mrd report --json report.json` renders the Markdown again.
 
-Exit codes: 0 no regression, 1 REGRESSION, 2 INCONCLUSIVE (pass `--inconclusive-ok` to make it 0), 3 usage or file format error.
+Exit codes are 0 for no regression, 1 for REGRESSION, 2 for INCONCLUSIVE (or 0 with
+`--inconclusive-ok`), and 3 for usage or format errors.
+
+## Gate text-to-sql-guardrails
+
+The committed text-to-SQL suite contains 40 benchmark questions and 32 attack prompts. Its
+baseline, regression, false-blocking, and noise runs are recorded JSONL, so reviewing the showcase
+does not need a database, credentials, network access, or a model call:
+
+```bash
+uv run mrd compare --suite examples/t2s/suite.yaml --baseline examples/t2s/baseline.jsonl \
+  --candidate examples/t2s/candidate_regress.jsonl --config examples/t2s/mrd.toml
+```
+
+The optional adapter can also generate and score new runs through the neighboring
+`text-to-sql-guardrails` checkout. `gold`, `mutated:<name>`, and `recorded:path.jsonl` generators are
+offline. The `anthropic` generator only prints an estimate unless the caller deliberately adds
+`--yes-spend`; that live path needs provider credentials and costs money. The demo reports in this
+repository are recorded and never exercise it. See [the CI guide](docs/ci.md) for the reusable
+action, auditable baseline acceptance, recorded/live controls, and the ready-to-copy t2s workflow.
 
 ## GitHub Actions gate
 
-The root `action.yml` turns the comparison into a pull-request gate. It writes the Markdown report
-to the job summary, exposes the verdict and regressed metrics as outputs, and fails the step on a
-REGRESSION. The committed demo workflow exercises both outcomes entirely from recorded runs.
+The root [`action.yml`](action.yml) writes the same Markdown to the GitHub job summary, exposes the
+verdict and regressed metrics as outputs, and fails the step on REGRESSION.
 
 ```yaml
 - uses: BahaBerkPancar/model-regression-detector@<full-release-commit-sha>
@@ -42,61 +88,12 @@ REGRESSION. The committed demo workflow exercises both outcomes entirely from re
     config: examples/t2s/mrd.toml
 ```
 
-The local dry run produces the same summary shape GitHub displays:
-
-```text
-# Model regression check: REGRESSION
-Suite text-to-sql-guardrails. Baseline baseline vs candidate candidate-regress.
-| correct | pass_fail | 0.931 | 0.639 | -0.292 | ... | **REGRESSION** |
-
-verdict=REGRESSION
-exit_code=1
-regressed_metrics=correct
-```
-
-See [docs/ci.md](docs/ci.md) for baseline acceptance and provenance, action pin updates, the
-ready-to-copy t2s workflow, recorded-versus-live cost controls, and repeat/flakiness guidance.
-
-For the regression example the headline looks like this:
-
-```
-# Model regression check: REGRESSION
-- correct regressed: p = 0.007812 is below alpha 0.05 and the effect 0.2 reaches min_effect 0.05
-| correct | pass_fail | 0.850 | 0.650 | -0.200 | [-0.325, -0.075] | 0.0078 | 8/0 | **REGRESSION** |
-| math | correct | 10 | 1.000 | 0.200 | -0.800 | [-1.000, -0.500] | 0.0078 | 0.0312 | REGRESSION |
-```
-
-## How the statistics work
-
-- **Pass/fail metrics: McNemar exact test.** Only the cases that changed matter. If 10 cases newly fail and 2 newly pass, the question is whether 10 of 12 is too lopsided for a fair coin. Here p = 79/2048 = 0.0386. No approximations, so it holds for small counts.
-- **Score metrics: sign-flip permutation test.** If nothing changed, the sign of each per-case difference is arbitrary. The test flips signs and counts how often the average moves as far as it did (all combinations for up to 16 changed cases, random ones beyond that).
-- **Confidence intervals.** The 95% interval for the change comes from resampling the cases with a fixed seed, so the same inputs give the same report.
-- **A verdict needs both** p below alpha and an effect at least `min_effect` (a 1-point drop can be significant on a huge suite and still not worth blocking a merge).
-- **INCONCLUSIVE** means the suite cannot decide. It happens when fewer cases are paired than a test needs (6 at alpha 0.05), when fewer than 6 cases changed but the change is at least an explicit `min_effect` above 0 (big enough to matter, too few cases to test), when more than 10% of the suite is missing from the candidate run, or when more than 10% of cases have no usable score for a score metric. A few flips on a large suite are simply NO_CHANGE ("only k cases differ"). Cases missing from the baseline only are reported and excluded. A significant regression always wins over these doubts.
-- **Errors in score metrics.** A case whose repeats all errored has no score, so it is counted as unusable for that metric and listed in the reason. If more than 10% are unusable it is INCONCLUSIVE, or REGRESSION when only the candidate has them (it started crashing).
-- **Latency and cost limits are plain thresholds**, not statistical tests: `max_latency_regression_pct` compares the raw p95 latency (cases with latency in both runs only), `max_cost_regression_pct` compares total cost.
-- **Repeats and flaky cases.** With several repeats per case the majority result is used, and cases that both pass and fail within one run are listed as flaky.
-- **Slices by tag** repeat the tests per tag. They are exploratory; p-values are corrected across tags with Holm's method, and the verdict per slice uses the corrected value.
-
-## Gating text-to-sql-guardrails
-
-The optional t2s adapter exports the neighboring project's 40 benchmark questions and 32 attack prompts, then runs them through its real validation and read-only execution pipeline. The committed offline demos show a SQL regression (`REGRESSION`, exit 1), false blocking (`REGRESSION`, exit 1), and seeded noise (`NO_CHANGE`, exit 0).
-
-```bash
-uv sync --extra t2s
-export TEST_DATABASE_URL=postgresql+psycopg://app:app@127.0.0.1:55432/app
-examples/t2s/make_demo.sh
-```
-
-**Warning:** `make_demo.sh` uses t2s's benchmark setup, which drops and recreates the `public` schema at `TEST_DATABASE_URL` before each run. Point it only at the disposable t2s test database.
-
-Use `--generator gold`, `mutated:<name>`, or `recorded:path/to/generations.jsonl`. Mutations are `drop-order-by`, `off-by-one-limit` (only existing limits), `wrong-join` (a seeded half of join cases), `harmless-function` (valid result-preserving SQL rejected by the function allowlist), `leaky`, and `noise`; compose them with `+` and select deterministic cases with `--seed`. Recorded files contain one JSON object per prompt, such as `{"question":"...","sql":"SELECT ..."}` or `{"question":"...","refusal":"..."}`; this lets a separately captured real-model run be rescored without network access. `--generator anthropic` only prints a cost estimate and exits 3 unless the caller explicitly supplies `--yes-spend`.
-
-The neighboring checkout defaults to `../text-to-sql-guardrails`; set `MRD_T2S_ROOT` to use another read-only checkout.
+Pin releases by full commit SHA. The repository's demo workflow exercises passing and failing
+outcomes entirely from recorded files.
 
 ## Formats
 
-Suite (YAML):
+A suite is YAML with named metrics and stable case IDs:
 
 ```yaml
 name: qa-toy
@@ -107,58 +104,68 @@ cases:
   - {id: math-01, input: "What is 6 * 7?", expected: "42", tags: [math]}
 ```
 
-Run (JSONL): a header line, then one line per case and repeat.
+A run is JSONL: one header, then one row per case and repeat.
 
 ```json
-{"type": "run", "suite": "qa-toy", "variant": "baseline", "created_at": "2026-11-17T00:00:00Z", "meta": {"model": "m", "prompt_version": "v1", "git_sha": "abc"}}
-{"case_id": "math-01", "repeat": 0, "output": "42", "scores": {"correct": true, "similarity": 0.97}, "latency_ms": 410.0, "cost_usd": 0.001}
+{"type":"run","suite":"qa-toy","variant":"baseline","meta":{"model":"m","prompt_version":"v1"}}
+{"case_id":"math-01","repeat":0,"output":"42","scores":{"correct":true,"similarity":0.97},"latency_ms":410.0,"cost_usd":0.001}
 ```
 
-A line with `"error": "..."` counts as failing every pass_fail metric and is listed in the report.
+`mrd.toml` controls `alpha`, bootstrap samples and seed, default/per-metric `min_effect`, per-tag
+overrides, `fail_on`, and raw latency/cost thresholds. A row with `error` fails every pass/fail
+metric; score metrics report it as unusable rather than inventing a number.
 
-Config (`mrd.toml`, all optional):
+### DeepEval export bridge
 
-```toml
-alpha = 0.05
-default_min_effect = 0.05        # absolute change in pass rate, for pass_fail metrics
-                                 # score metrics default to 0.0 (any significant change counts); set [min_effect] per metric
-bootstrap_samples = 10000
-seed = 7
-fail_on = "regression"           # or "any_case_newly_failing"
-max_latency_regression_pct = 50  # p95 latency
-max_cost_regression_pct = 50     # total cost
+`mrd from-deepeval results.json --suite my-suite --variant candidate --out candidate.jsonl`
+converts a bare result list or an object containing `test_results`/`testResults`. It duck-types only
+`name`, `success`, optional `score`, and `metrics_data`/`metricsData` entries, so importing mrd never
+imports DeepEval. Duplicate result names become repeats. Numeric metric scores take precedence;
+metrics without a score use their boolean success value. The exported JSON shape was written from
+DeepEval's documented result fields and has not been verified against a real export yet (see DECISIONS).
 
-[min_effect]
-similarity = 0.02
+The bridge does not run metrics or models. In particular, DeepEval LLM-judge metrics require the
+appropriate provider key and can cost money when evaluated elsewhere; none of this repository's
+demos uses an LLM judge. The empty `deepeval` extra documents the optional integration boundary but
+does not install DeepEval—export results from the environment that owns the evaluator.
 
-[tags.math]                      # per-tag override for the slice
-alpha = 0.1
-[tags.math.min_effect]
-correct = 0.1
-```
+## Limitations
 
-Scorers for later adapters live in `scorers.py` (exact match, numeric tolerance, regex, JSON fields, row sets, plus `register_scorer`).
+- Paired tests assume cases are independent. Near-duplicates, shared conversations, or repeated
+  variants of one underlying example make the evidence look stronger than it is.
+- Small suites have limited power. For a two-sided exact pass/fail test, even a perfectly one-sided
+  result cannot cross `alpha` until enough cases differ:
 
-## Limits
+  | alpha | Minimum discordant cases | Smallest attainable p |
+  | ---: | ---: | ---: |
+  | 0.05 | 6 | 0.03125 |
+  | 0.01 | 8 | 0.0078125 |
 
-Statistics cannot fix a bad suite: a few dozen cases only catch big regressions, and the tool says INCONCLUSIVE instead of guessing. Slice results do not gate the build.
-
-## Setup
-
-```bash
-uv sync
-```
+- Recorded runs test the comparison and gate, not the current live model. Generate a fresh run when
+  model drift is what you need to detect.
+- The latency gate compares raw p95 values for cases present in both runs; it is a threshold, not a
+  statistical latency test.
+- The noise demo uses seed 25 because, against seed 1, it gives a deliberately clean five-worse /
+  five-better split. It demonstrates paired behavior, not a claim about production randomness.
+- Tag slices are exploratory, suite quality still dominates results, and missing or unusable cases
+  can make a result INCONCLUSIVE. A statistical tool cannot repair a biased eval suite.
 
 ## Development
-
-Run the tests:
 
 ```bash
 uv run pytest && uv run ruff check .
 ```
 
-## How this repo is organised
+The test suite is offline. PostgreSQL adapter tests are marked `pg` and require an explicitly
+configured disposable database.
 
-- `AGENTS.md` – rules for coding agents (Claude Code reads it through `CLAUDE.md`)
-- `DECISIONS.md` – why things are the way they are
-- `CHANGELOG.md` – what changed in each release
+## Project layout
+
+- `src/model_regression_detector/` — formats, paired statistics, comparison, reports, CLI, adapters,
+  and optional bridges
+- `tests/` — synthetic statistical cases, format/CLI tests, CI policy checks, and adapter tests
+- `examples/qa/` — small deterministic introduction
+- `examples/t2s/` — recorded 72-case showcase and configurations
+- `docs/` — CI guide and rendered showcase assets
+- `DECISIONS.md` — dated trade-offs and statistical choices
+- `CHANGELOG.md` — user-visible changes

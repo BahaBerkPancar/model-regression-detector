@@ -10,6 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+deepeval = []
 t2s = ["text-to-sql-guardrails"]
 
 [project.scripts]
