@@ -2,6 +2,15 @@
 
 Newest first. One entry per decision: date, what was decided, why, and what was rejected.
 
+## 2026-11-17 – M3 CI gate: file protocols, auditable baselines, pinned actions
+- **GitHub integration uses its summary/output files, not API calls.** `mrd compare` appends the same Markdown produced locally, writes three single-line outputs, and emits escaped error/warning annotations. The report is byte-capped at 1 MiB so model output cannot make the step summary fail. On GitHub the full untrusted Markdown stays out of stdout, where workflow-command syntax is active.
+- **Accepted runs stay byte-for-byte intact; provenance is a sidecar.** Rewriting a run header would change the evidence being accepted. `<baseline>.provenance.json` records acceptance time, Git SHA, suite, variant, previous variant, and the comparison verdict. Replacing an existing baseline requires `--suite` (and accepts the normal optional config), because inventing a verdict without metric definitions would be misleading.
+- **Action inputs cross the shell boundary through environment variables and quoted arrays.** This handles whitespace and shell metacharacters without evaluating user-controlled paths. Direct expression interpolation into `run:` blocks was rejected.
+- **Actions are full-SHA pinned.** Version comments preserve readability; upgrades require reviewing and changing the SHA. The unpublished first-party t2s references use an unmistakable all-zero placeholder and cannot be enabled until it is replaced by the reviewed release SHA.
+- **The composite action runs from the committed uv lock.** `uv run --frozen --no-extra t2s` gives consumers the reviewed dependency versions without resolving the optional local t2s checkout; the `python-version` input is also passed to uv instead of affecting only setup-python.
+- **The noise demo's second seed was deliberately selected for a clean 5/5 split.** Seed 25 balances seed 1 with exactly five improvements and five regressions, making NO_CHANGE an honest paired result rather than an accidental low-power result.
+- **The PostgreSQL equivalence test prepares its own database.** It now calls `prepare_database` before executing either query, removing its hidden dependence on another test having created the schema first.
+
 ## 2026-11-17 – M2 t2s adapter: optional target, deterministic mutations, replay
 - **The target is an optional `t2s` extra backed by a uv path source.** The core formats and comparison engine still install without the neighboring application; adapter entry points give a direct install hint when it is absent.
 - **Mutations operate on sqlglot syntax trees and a stable seed.** This keeps demonstrations repeatable and makes each bad-prompt analogue inspectable. Multiple mutations compose with `+`. The honest over-block mutation adds the valid, result-preserving predicate `reverse(reverse('mrd')) = 'mrd'`; PostgreSQL returns the same rows, while t2s conservatively rejects the unallowlisted function. An invalid whole-row projection was rejected as a misleading demonstration.

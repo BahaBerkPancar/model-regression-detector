@@ -27,6 +27,36 @@ Add `--md report.md --json report.json` to write the reports (`mrd report --json
 
 Exit codes: 0 no regression, 1 REGRESSION, 2 INCONCLUSIVE (pass `--inconclusive-ok` to make it 0), 3 usage or file format error.
 
+## GitHub Actions gate
+
+The root `action.yml` turns the comparison into a pull-request gate. It writes the Markdown report
+to the job summary, exposes the verdict and regressed metrics as outputs, and fails the step on a
+REGRESSION. The committed demo workflow exercises both outcomes entirely from recorded runs.
+
+```yaml
+- uses: BahaBerkPancar/model-regression-detector@<full-release-commit-sha>
+  with:
+    suite: examples/t2s/suite.yaml
+    baseline: examples/t2s/baseline.jsonl
+    candidate: candidate.jsonl
+    config: examples/t2s/mrd.toml
+```
+
+The local dry run produces the same summary shape GitHub displays:
+
+```text
+# Model regression check: REGRESSION
+Suite text-to-sql-guardrails. Baseline baseline vs candidate candidate-regress.
+| correct | pass_fail | 0.931 | 0.639 | -0.292 | ... | **REGRESSION** |
+
+verdict=REGRESSION
+exit_code=1
+regressed_metrics=correct
+```
+
+See [docs/ci.md](docs/ci.md) for baseline acceptance and provenance, action pin updates, the
+ready-to-copy t2s workflow, recorded-versus-live cost controls, and repeat/flakiness guidance.
+
 For the regression example the headline looks like this:
 
 ```

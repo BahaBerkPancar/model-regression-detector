@@ -9,9 +9,11 @@ from pathlib import Path
 from typing import NoReturn
 
 from . import __version__
+from .baseline import accept_baseline, show_baseline
 from .compare import INCONCLUSIVE, REGRESSION, compare_runs
 from .config import load_config
 from .formats import FormatError, load_run, load_suite
+from .github import publish_comparison, running_on_github
 from .report import render_json, render_markdown
 
 EXIT_OK, EXIT_REGRESSION, EXIT_INCONCLUSIVE, EXIT_USAGE = 0, 1, 2, 3
@@ -65,6 +67,16 @@ def _build() -> argparse.ArgumentParser:
     t2ssub = t2s.add_subparsers(dest="t2s_command", required=True, parser_class=_Parser)
     export = t2ssub.add_parser("export-suite", help="export the t2s benchmark as an mrd suite")
     export.add_argument("--out", required=True)
+
+    baseline = sub.add_parser("baseline", help="accept or inspect a stored baseline")
+    bsub = baseline.add_subparsers(dest="baseline_command", required=True, parser_class=_Parser)
+    accept = bsub.add_parser("accept", help="copy a run into the baseline with provenance")
+    accept.add_argument("--run", required=True)
+    accept.add_argument("--to", required=True)
+    accept.add_argument("--suite", help="required when replacing an existing baseline")
+    accept.add_argument("--config")
+    show = bsub.add_parser("show", help="show a baseline header and acceptance provenance")
+    show.add_argument("baseline")
     return parser
 
 
@@ -84,21 +96,24 @@ def _cmd_compare(args: argparse.Namespace) -> int:
     result = compare_runs(suite, load_run(args.baseline, suite), load_run(args.candidate, suite),
                           cfg).to_dict()
     markdown = render_markdown(result)
+    exit_code = EXIT_OK
+    if result["verdict"] == REGRESSION:
+        exit_code = EXIT_REGRESSION
+    elif result["verdict"] == INCONCLUSIVE and not args.inconclusive_ok:
+        exit_code = EXIT_INCONCLUSIVE
     if args.md:
         Path(args.md).write_text(markdown, encoding="utf-8")
     if args.json:
         Path(args.json).write_text(render_json(result), encoding="utf-8")
-    if args.md or args.json:
+    if args.md or args.json or running_on_github():
         print(f"Verdict: {result['verdict']}")
-        for reason in result["reasons"]:
-            print(f"  - {reason}")
+        if not running_on_github():
+            for reason in result["reasons"]:
+                print(f"  - {reason}")
     else:
         print(markdown, end="")
-    if result["verdict"] == REGRESSION:
-        return EXIT_REGRESSION
-    if result["verdict"] == INCONCLUSIVE and not args.inconclusive_ok:
-        return EXIT_INCONCLUSIVE
-    return EXIT_OK
+    publish_comparison(result, markdown, exit_code)
+    return exit_code
 
 
 def _cmd_report(args: argparse.Namespace) -> int:
@@ -151,6 +166,21 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_baseline(args: argparse.Namespace) -> int:
+    if args.baseline_command == "accept":
+        provenance = accept_baseline(
+            args.run, args.to, suite_path=args.suite, config_path=args.config
+        )
+        print(
+            f"Accepted {provenance['variant']!r} for suite {provenance['suite']!r}: "
+            f"{provenance['verdict_vs_previous']}"
+        )
+        print(f"Baseline: {args.to}")
+        return EXIT_OK
+    print(json.dumps(show_baseline(args.baseline), indent=2, sort_keys=True))
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build().parse_args(argv)
     handlers = {
@@ -159,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
         "report": _cmd_report,
         "run": _cmd_run,
         "t2s": _cmd_t2s,
+        "baseline": _cmd_baseline,
     }
     try:
         return handlers[args.command](args)
