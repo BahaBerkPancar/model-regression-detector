@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Added the optional text-to-SQL adapter: suite export, guarded runner, deterministic mutated-gold and recorded generators, offline demo runs/reports, and a paid Anthropic path that requires explicit `--yes-spend`.
+- M2 review fixes: core tests skip cleanly without the optional extra; demos now use an imperfect seeded baseline, balanced noise, and a PostgreSQL-valid policy over-block; offline metadata/costs are explicit; runs checksum the database for writes; mutation semantics, sorting tags, and configurable t2s roots are documented and tested.
 - Project created.
 - Core engine (M1): suite YAML, run JSONL and `mrd.toml` formats with validation errors that name the file and line or case id.
 - Paired comparison: McNemar exact test for pass/fail metrics, paired bootstrap CI and sign-flip permutation test for scores, slices by tag with Holm correction, flaky and newly failing/passing case lists, latency and cost deltas.

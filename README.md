@@ -48,6 +48,22 @@ For the regression example the headline looks like this:
 - **Repeats and flaky cases.** With several repeats per case the majority result is used, and cases that both pass and fail within one run are listed as flaky.
 - **Slices by tag** repeat the tests per tag. They are exploratory; p-values are corrected across tags with Holm's method, and the verdict per slice uses the corrected value.
 
+## Gating text-to-sql-guardrails
+
+The optional t2s adapter exports the neighboring project's 40 benchmark questions and 32 attack prompts, then runs them through its real validation and read-only execution pipeline. The committed offline demos show a SQL regression (`REGRESSION`, exit 1), false blocking (`REGRESSION`, exit 1), and seeded noise (`NO_CHANGE`, exit 0).
+
+```bash
+uv sync --extra t2s
+export TEST_DATABASE_URL=postgresql+psycopg://app:app@127.0.0.1:55432/app
+examples/t2s/make_demo.sh
+```
+
+**Warning:** `make_demo.sh` uses t2s's benchmark setup, which drops and recreates the `public` schema at `TEST_DATABASE_URL` before each run. Point it only at the disposable t2s test database.
+
+Use `--generator gold`, `mutated:<name>`, or `recorded:path/to/generations.jsonl`. Mutations are `drop-order-by`, `off-by-one-limit` (only existing limits), `wrong-join` (a seeded half of join cases), `harmless-function` (valid result-preserving SQL rejected by the function allowlist), `leaky`, and `noise`; compose them with `+` and select deterministic cases with `--seed`. Recorded files contain one JSON object per prompt, such as `{"question":"...","sql":"SELECT ..."}` or `{"question":"...","refusal":"..."}`; this lets a separately captured real-model run be rescored without network access. `--generator anthropic` only prints a cost estimate and exits 3 unless the caller explicitly supplies `--yes-spend`.
+
+The neighboring checkout defaults to `../text-to-sql-guardrails`; set `MRD_T2S_ROOT` to use another read-only checkout.
+
 ## Formats
 
 Suite (YAML):

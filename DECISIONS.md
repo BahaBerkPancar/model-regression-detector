@@ -2,6 +2,13 @@
 
 Newest first. One entry per decision: date, what was decided, why, and what was rejected.
 
+## 2026-11-17 – M2 t2s adapter: optional target, deterministic mutations, replay
+- **The target is an optional `t2s` extra backed by a uv path source.** The core formats and comparison engine still install without the neighboring application; adapter entry points give a direct install hint when it is absent.
+- **Mutations operate on sqlglot syntax trees and a stable seed.** This keeps demonstrations repeatable and makes each bad-prompt analogue inspectable. Multiple mutations compose with `+`. The honest over-block mutation adds the valid, result-preserving predicate `reverse(reverse('mrd')) = 'mrd'`; PostgreSQL returns the same rows, while t2s conservatively rejects the unallowlisted function. An invalid whole-row projection was rejected as a misleading demonstration.
+- **Noise compares two imperfect seeded runs.** Seed 1 and seed 25 select disjoint five-case failure sets, so the candidate has five improvements and five regressions. `NO_CHANGE` therefore comes from balanced paired evidence, not from comparing a perfect baseline or merely having too few changed cases. The regression candidates retain seed 1's imperfections so all demos share the same baseline.
+- **Recorded replay is prompt-keyed JSONL.** Capturing and scoring are intentionally separate: paid or changing provider output can be collected under explicit human control, then repeatedly scored offline without credentials or network access.
+- **The demo uses the statistical regression gate.** The combined ordering/join regression and honest policy over-block produce enough paired failures for McNemar significance; balanced seeded noise produces `NO_CHANGE`.
+
 ## 2026-11-17 – Fix round 1: INCONCLUSIVE rule, unusable scores, missing cases
 - **INCONCLUSIVE is narrower.** The first rule flagged any run with fewer than 6 changed cases, so a 200-case suite with one flip failed CI. Now: INCONCLUSIVE only when fewer cases are paired than a test needs, or when fewer than 6 cases changed AND the effect is at least `min_effect` (it would matter, but there are too few cases to test). Otherwise NO_CHANGE with "only k cases differ". Same for score metrics. The few-changes INCONCLUSIVE branch applies only when `min_effect` > 0 (an explicit "this size matters"); with min_effect 0 (the score default) it is NO_CHANGE, "only k case(s) differ; set min_effect ... to gate small samples".
 - **Unusable scores are counted, not dropped.** A case whose repeats all errored has no score for a score metric. It is listed per metric; over 10% of paired cases unusable gives INCONCLUSIVE, or REGRESSION when only the candidate has them (it started crashing). A significant regression keeps its verdict.

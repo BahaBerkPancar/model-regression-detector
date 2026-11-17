@@ -1,0 +1,8 @@
+alpha = 0.05
+default_min_effect = 0.05
+bootstrap_samples = 10000
+seed = 17
+fail_on = "regression"
+
+[min_effect]
+attempts = 0.1

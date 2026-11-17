@@ -49,6 +49,22 @@ def _build() -> argparse.ArgumentParser:
     r = sub.add_parser("report", help="re-render the Markdown report from a JSON report")
     r.add_argument("--json", required=True)
     r.add_argument("--md", help="write here instead of stdout")
+
+    run = sub.add_parser("run", help="execute an evaluation suite through an adapter")
+    run.add_argument("--adapter", required=True, choices=["t2s"])
+    run.add_argument("--generator", required=True)
+    run.add_argument("--suite", required=True)
+    run.add_argument("--out", required=True)
+    run.add_argument("--repeats", type=int, default=1)
+    run.add_argument("--variant", default="candidate")
+    run.add_argument("--model", default="claude-sonnet-5-5")
+    run.add_argument("--seed", type=int, default=17)
+    run.add_argument("--yes-spend", action="store_true")
+
+    t2s = sub.add_parser("t2s", help="text-to-sql-guardrails adapter utilities")
+    t2ssub = t2s.add_subparsers(dest="t2s_command", required=True, parser_class=_Parser)
+    export = t2ssub.add_parser("export-suite", help="export the t2s benchmark as an mrd suite")
+    export.add_argument("--out", required=True)
     return parser
 
 
@@ -100,12 +116,53 @@ def _cmd_report(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_t2s(args: argparse.Namespace) -> int:
+    from .adapters.t2s import export_suite
+
+    count = export_suite(args.out)
+    print(f"Wrote {count} cases to {args.out}")
+    return EXIT_OK
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    if args.repeats < 1:
+        raise ValueError("--repeats must be at least 1")
+    from .adapters.t2s import estimate_anthropic, run
+
+    if args.generator == "anthropic" and not args.yes_spend:
+        estimate = estimate_anthropic(args.suite, args.model)
+        cost = estimate["cost_usd"]
+        shown = "unknown" if cost is None else f"${cost:.6f} USD"
+        print("Cost estimate only; no model API call was made.")
+        print(f"Estimated {estimate['calls']} calls; cost: {shown}")
+        print("Re-run with --yes-spend to call the model.")
+        return EXIT_USAGE
+    count = run(
+        suite_path=args.suite,
+        output_path=args.out,
+        generator_spec=args.generator,
+        repeats=args.repeats,
+        variant=args.variant,
+        model=args.model,
+        yes_spend=args.yes_spend,
+        seed=args.seed,
+    )
+    print(f"Wrote {count} result rows to {args.out}")
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build().parse_args(argv)
-    handlers = {"validate": _cmd_validate, "compare": _cmd_compare, "report": _cmd_report}
+    handlers = {
+        "validate": _cmd_validate,
+        "compare": _cmd_compare,
+        "report": _cmd_report,
+        "run": _cmd_run,
+        "t2s": _cmd_t2s,
+    }
     try:
         return handlers[args.command](args)
-    except (FormatError, OSError, ValueError) as exc:
+    except (FormatError, OSError, RuntimeError, ValueError) as exc:
         print(f"error: {type(exc).__name__}: {exc}", file=sys.stderr)
         return EXIT_USAGE
 
