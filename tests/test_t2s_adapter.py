@@ -180,7 +180,7 @@ def test_small_end_to_end_run(tmp_path):
 def test_harmless_function_is_valid_and_result_preserving_but_policy_blocks_it():
     if not os.getenv("TEST_DATABASE_URL"):
         pytest.skip("TEST_DATABASE_URL is not set")
-    from sqlalchemy import create_engine
+    from text_to_sql_guardrails.bench.guardrails import prepare_database
     from text_to_sql_guardrails.bench.llm import result_rows_equal
     from text_to_sql_guardrails.guard.executor import run_readonly
     from text_to_sql_guardrails.guard.policy import load_policy
@@ -188,12 +188,13 @@ def test_harmless_function_is_valid_and_result_preserving_but_policy_blocks_it()
 
     question = t2s.load_corpus()[0][0]
     mutated = mutate_sql(question.gold_sql, "harmless-function", key=question.id)
-    engine = create_engine(os.environ["TEST_DATABASE_URL"])
+    admin, readonly = prepare_database(os.environ["TEST_DATABASE_URL"], root=t2s.t2s_root())
     try:
-        expected = run_readonly(question.gold_sql, engine, timeout_ms=3_000, max_rows=500)
-        actual = run_readonly(mutated, engine, timeout_ms=3_000, max_rows=500)
+        expected = run_readonly(question.gold_sql, readonly, timeout_ms=3_000, max_rows=500)
+        actual = run_readonly(mutated, readonly, timeout_ms=3_000, max_rows=500)
     finally:
-        engine.dispose()
+        readonly.dispose()
+        admin.dispose()
     assert result_rows_equal(expected.rows, actual.rows, ordered=True)
     rejected = validate(mutated, load_policy(t2s.t2s_root() / "config/policy.toml"))
     assert not rejected.ok
